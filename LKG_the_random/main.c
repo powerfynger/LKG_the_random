@@ -9,8 +9,9 @@ void get_c(unsigned long long* list);
 unsigned long long get_a();
 void lcg(unsigned long long a, unsigned long long x, unsigned long long c, unsigned long long m, unsigned long long n);
 void lcg_init();
-void bits();
+void bits_lcg(unsigned long long a, unsigned long long x, unsigned long long c, unsigned long long m, unsigned long long n, unsigned long long* mass);
 void read_command(char* command);
+void bits_init();
 unsigned long long read_num_ulonglong(FILE* file);
 unsigned long long bin_pow_ulonglong(unsigned short s);
 unsigned short read_num_ushort(FILE* file);
@@ -64,7 +65,7 @@ int main() {
 		lcg_init();
 	}
 	else if (!strcmp(command, "bits")) {
-		bits();
+		bits_init();
 	}
 	else {
 		FILE* file_output;
@@ -245,9 +246,99 @@ void lcg(unsigned long long a, unsigned long long x, unsigned long long c, unsig
 	fclose(file_output);
 }
 
-void bits() {
+void bits_lcg(unsigned long long a, unsigned long long x, unsigned long long c, unsigned long long m, unsigned long long n, unsigned long long* mass) {
+	if (n > max_n) {
+		return;
+	}
+	bits_lcg(a, (a * x + c) % m, c, m, n + 1, mass);
+	int i = 0;
+	while (x != 0 || i != 63) {
+		mass[i] += x % 2;
+		x = x / 10;
+		i++;
+	}
+}
 
-
+void bits_init() {
+	FILE* file_input;
+	// ѕеременна€ отвечает за проверку количества аргументов
+	char change = 0;
+	unsigned long long m = 0, c = 0, x0 = 0, a = 0; // 0 <= a, x0, c, m, n <= 2^64 - 1; a, x0, c < m; !(n = 0 || a, c, x0 >= m)
+	char curr_char = '\0';
+	if (fopen_s(&file_input, FILENAME_IN, "r")) {
+		printf("Unable access to file.\n");
+		exit(-1);
+	}
+	// „тение аргументов
+	while (curr_char != EOF) {
+		curr_char = fgetc(file_input);
+		switch (curr_char)
+		{
+		case 'm':
+			curr_char = fgetc(file_input);
+			m = read_num_ulonglong(file_input);
+			change++;
+			break;
+		case 'c':
+			curr_char = fgetc(file_input);
+			if (curr_char == 'g') {
+				break;
+			}
+			c = read_num_ulonglong(file_input);
+			change++;
+			break;
+		case 'x':
+			curr_char = fgetc(file_input);
+			curr_char = fgetc(file_input);
+			x0 = read_num_ulonglong(file_input);
+			change++;
+			break;
+		case 'a':
+			curr_char = fgetc(file_input);
+			a = read_num_ulonglong(file_input);
+			change++;
+			break;
+		case 'n':
+			curr_char = fgetc(file_input);
+			max_n = read_num_ulonglong(file_input);
+			change++;
+			break;
+		default:
+			break;
+		}
+	}
+	// ѕроверка на количество аргументов
+	if (change != 5) {
+		FILE* file_output;
+		if (!fopen_s(&file_output, FILENAME_OUT, "w")) {
+			fprintf_s(file_output, "incorrect command"); exit(0);
+		}
+		else {
+			printf("Error while creating output file.\n");
+		}
+		exit(-1);
+	}
+	if (max_n == 0 || a >= m || c >= m || x0 >= m || a < 0) {
+		FILE* file_output;
+		if (!fopen_s(&file_output, FILENAME_OUT, "w")) {
+			fprintf_s(file_output, "no solution"); exit(0);
+		}
+		else {
+			printf("Error while creating output file.\n");
+		}
+		exit(-1);
+	}
+	unsigned long long mass[64] = { 0 };
+	bits_lcg(a, x0, c, m, 1, mass);
+	FILE* file_output;
+	if (fopen_s(&file_output, FILENAME_OUT, "a+")) {
+		printf("Unable to create output file.\n");
+		exit(-1);
+	}
+	for (int i = 0; i < 63; i++) {
+		fprintf_s(file_output, "%llu\n", mass[i]);
+	}
+	fclose(file_output);
 }
 
 void lcg_init() {
@@ -321,7 +412,6 @@ void lcg_init() {
 	}
 	lcg(a, x0, c, m, 1);
 }
-
 
 void read_command(char* command) {
 	FILE* file_input;
