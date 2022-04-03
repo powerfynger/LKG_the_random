@@ -18,7 +18,6 @@ unsigned short read_num_ushort(FILE* file);
 unsigned long long is_coprime(unsigned long long c, unsigned long long m);
 char is_prime(unsigned long long n);
 
-unsigned long long max_n = 0;
 
 int main() {
 	FILE* file_output;
@@ -27,6 +26,7 @@ int main() {
 	}
 	else {
 		printf("Error while creating output file.\n");
+		exit(-1);
 	}
 	char command[8] = { '\0' };
 	read_command(command);
@@ -226,44 +226,67 @@ unsigned long long get_a() {
 			change = 1;
 			i = 1;
 			a++;
-
 		}
 	}
 	return a;
 }
 
+//void lcg(unsigned long long a, unsigned long long x, unsigned long long c, unsigned long long m, unsigned long long n) {
+//	if (n > max_n) {
+//		return;
+//	}
+//	lcg(a, (a*x+c) % m, c, m, n + 1);
+//	FILE* file_output;
+//	if (fopen_s(&file_output, FILENAME_OUT, "a+")) {
+//		printf("Unable to create output file.\n");
+//		exit(-1);
+//	}
+//	fprintf_s(file_output, "%llu\n", x);
+//	fclose(file_output);
+//}
+
 void lcg(unsigned long long a, unsigned long long x, unsigned long long c, unsigned long long m, unsigned long long n) {
-	if (n > max_n) {
-		return;
-	}
-	lcg(a, (a*x+c) % m, c, m, n + 1);
 	FILE* file_output;
 	if (fopen_s(&file_output, FILENAME_OUT, "a+")) {
 		printf("Unable to create output file.\n");
 		exit(-1);
 	}
-	fprintf_s(file_output, "%llu\n", x);
+	unsigned long long i = 0;
+	while (i < n) {
+		x = (a * x + c) % m;
+		i++;
+		fprintf_s(file_output, "%llu\n", x);
+	}
 	fclose(file_output);
 }
 
 void bits_lcg(unsigned long long a, unsigned long long x, unsigned long long c, unsigned long long m, unsigned long long n, unsigned long long* mass) {
-	if (n > max_n) {
-		return;
+	FILE* file_output;
+	if (fopen_s(&file_output, FILENAME_OUT, "a+")) {
+		printf("Unable to create output file.\n");
+		exit(-1);
 	}
-	bits_lcg(a, (a * x + c) % m, c, m, n + 1, mass);
-	int i = 0;
-	while (x != 0 || i != 63) {
-		mass[i] += x % 2;
-		x = x / 10;
+	unsigned long long i = 0;
+	int k = 0;
+	while (i < n) {
+		x = (a * x + c) % m;
 		i++;
+		k = 0;
+		while (x != 0 || i != 63) {
+			mass[i] += x % 2;
+			x = x / 10;
+			i++;
+		}
+		fprintf_s(file_output, "%llu\n", x);
 	}
+	
 }
 
 void bits_init() {
 	FILE* file_input;
 	// Переменная отвечает за проверку количества аргументов
 	char change = 0;
-	unsigned long long m = 0, c = 0, x0 = 0, a = 0; // 0 <= a, x0, c, m, n <= 2^64 - 1; a, x0, c < m; !(n = 0 || a, c, x0 >= m)
+	unsigned long long n = 0, m = 0, c = 0, x0 = 0, a = 0; // 0 <= a, x0, c, m, n <= 2^64 - 1; a, x0, c < m; !(n = 0 || a, c, x0 >= m)
 	char curr_char = '\0';
 	if (fopen_s(&file_input, FILENAME_IN, "r")) {
 		printf("Unable access to file.\n");
@@ -300,7 +323,7 @@ void bits_init() {
 			break;
 		case 'n':
 			curr_char = fgetc(file_input);
-			max_n = read_num_ulonglong(file_input);
+			n = read_num_ulonglong(file_input);
 			change++;
 			break;
 		default:
@@ -318,7 +341,7 @@ void bits_init() {
 		}
 		exit(-1);
 	}
-	if (max_n == 0 || a >= m || c >= m || x0 >= m || a < 0) {
+	if (n == 0 || a >= m || c >= m || x0 >= m || a < 0) {
 		FILE* file_output;
 		if (!fopen_s(&file_output, FILENAME_OUT, "w")) {
 			fprintf_s(file_output, "no solution"); exit(0);
@@ -329,7 +352,7 @@ void bits_init() {
 		exit(-1);
 	}
 	unsigned long long mass[64] = { 0 };
-	bits_lcg(a, x0, c, m, 1, mass);
+	bits_lcg(a, x0, c, m, n, mass);
 	FILE* file_output;
 	if (fopen_s(&file_output, FILENAME_OUT, "a+")) {
 		printf("Unable to create output file.\n");
@@ -345,7 +368,7 @@ void lcg_init() {
 	FILE* file_input;
 	// Переменная отвечает за проверку количества аргументов
 	char change = 0;
-	unsigned long long m = 0, c = 0, x0 = 0, a = 0; // 0 <= a, x0, c, m, n <= 2^64 - 1; a, x0, c < m; !(n = 0 || a, c, x0 >= m)
+	unsigned long long n = 0, m = 0, c = 0, x0 = 0, a = 0; // 0 <= a, x0, c, m, n <= 2^64 - 1; a, x0, c < m; !(n = 0 || a, c, x0 >= m)
 	char curr_char = '\0';
 	if (fopen_s(&file_input, FILENAME_IN, "r")) {
 		printf("Unable access to file.\n");
@@ -382,7 +405,7 @@ void lcg_init() {
 			break;
 		case 'n':
 			curr_char = fgetc(file_input);
-			max_n = read_num_ulonglong(file_input);
+			n = read_num_ulonglong(file_input);
 			change++;
 			break;
 		default:
@@ -400,7 +423,7 @@ void lcg_init() {
 		}
 		exit(-1);
 	}
-	if (max_n == 0 || a >= m || c >= m || x0 >= m || a < 0) {
+	if (n == 0 || a >= m || c >= m || x0 >= m || a < 0) {
 		FILE* file_output;
 		if (!fopen_s(&file_output, FILENAME_OUT, "w")) {
 			fprintf_s(file_output, "no solution"); exit(0); 
@@ -410,7 +433,7 @@ void lcg_init() {
 		}
 		exit(-1);
 	}
-	lcg(a, x0, c, m, 1);
+	lcg(a, x0, c, m, n);
 }
 
 void read_command(char* command) {
