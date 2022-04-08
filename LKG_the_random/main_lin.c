@@ -164,7 +164,7 @@ unsigned long long get_a() {
 	FILE* file_input;
 	// ���������� �������� �� �������� ���������� ����������
 	char change = 0;
-	unsigned long long m = 0, a = 2, i = 1;
+	unsigned long long m = 0, a = 1, i = 1;
 	char curr_char = '\0';
     file_input = fopen(FILENAME_IN, "r");
 	if (file_input == NULL) {
@@ -194,47 +194,28 @@ unsigned long long get_a() {
 		}
 	
 	if (m % 4 == 0) {
-		while (a < m/2 + 1) {
-			while (i < m/2 + 1) {
-				if (m % i == 0) {
-					if (is_prime(i)) {
-						if ((a-1) % i != 0 || (a-1) % 4 != 0 ) {
-							change = 0;
-							break;
-						}
+		a *= 4;
+		while(i*i < m + 1){
+			if(m%i == 0){
+				if(is_prime(i)){
+					if(a%i!=0){
+						a *= i;
 					}
 				}
-				i++;
 			}
-			if (change) {
-				break;
-			}
-			change = 1;
-			i = 1;
-			a++;
-
+			i++;
 		}
 	}
 	else{
-		while (a < (unsigned long long)pow(m, 1/2) + 1) {
-			while (i  < (unsigned long long)pow(m, 1/2) + 1) {
-				if (m % i == 0) {
-					if (is_prime(i)) {
-						if ((a-1) % i != 0) {
-							change = 0;
-							break;
-
-						}
+		while(i*i < m+1){
+			if(m%i == 0){
+				if(is_prime(i)){
+					if(a%i!=0){
+						a *= i;
 					}
 				}
-				i++;
 			}
-			if (change) {
-				break;
-			}
-			change = 1;
-			i = 1;
-			a++;
+			i++;
 		}
 	}
 	return a;
@@ -242,8 +223,8 @@ unsigned long long get_a() {
 
 void lcg(unsigned long long a, unsigned long long x, unsigned long long c, unsigned long long m, unsigned long long n) {
 	FILE* file_output;
-	// unsigned long long x0 = (a * x + c) % m;
-	// x = x0;
+	unsigned long long x0 = (a * x + c) % m;
+	x = x0;
     file_output = fopen(FILENAME_OUT, "a+");
 	if (file_output == NULL) {
 		printf("Unable to create output file.\n");
@@ -251,14 +232,14 @@ void lcg(unsigned long long a, unsigned long long x, unsigned long long c, unsig
 	}
 	unsigned long long i = 0;
 	while (i < n) {
-		x = (a * x + c) % m;
-		i++;
 		// x = (a * x + c) % m;
-		// if(x == x0){
-			// printf("%llu", i);
-			// exit(0);
-		// }
-		fprintf(file_output, "%llu\n", x);
+		i++;
+		x = (a * x + c) % m;
+		if(x == x0){
+			printf("%llu", i);
+			exit(0);
+		}
+		// fprintf(file_output, "%llu\n", x);
 	}
 	fclose(file_output);
 }
